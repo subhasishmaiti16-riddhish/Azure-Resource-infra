@@ -1,0 +1,90 @@
+pool:  pipeline-ADO
+
+trigger:
+  - main
+  - feature/*
+
+stages:
+- stage: terraformInitFmtAndValidation
+  displayName: terraform Init Fmt And Validation
+  jobs:
+    - job: terraformInitFmtAndValidation
+      displayName: terraform Init Fmt And Validation
+      steps:
+      - task: TerraformTask@5
+        displayName: terraformInit
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
+          backendServiceArm: 'azure-pipeline-yaml'
+          backendAzureRmResourceGroupName: 'rg-devops'
+          backendAzureRmStorageAccountName: 'datablockstorage'
+          backendAzureRmContainerName: 'aksstoragecont'
+          backendAzureRmKey: 'preprod.aksstoragecont'
+
+      - powershell: |
+          terraform fmt -check -recursive
+        displayName: Terraform Format Check
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment'
+
+      - task: TerraformTask@5
+        displayName: terraformValidate
+        inputs:
+          provider: 'azurerm'
+          command: 'validate'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
+
+- stage: terraformInitAndPlan
+  displayName: terraform Init And Plan
+  jobs:
+    - job: terraformInitAndPlan
+      displayName: terraform Init And Plan
+      steps:
+      - task: TerraformTask@5
+        displayName: terraformInit
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
+          backendServiceArm: 'azure-pipeline-yaml'
+          backendAzureRmResourceGroupName: 'rg-devops'
+          backendAzureRmStorageAccountName: 'datablockstorage'
+          backendAzureRmContainerName: 'aksstoragecont'
+          backendAzureRmKey: 'preprod.aksstoragecont'
+      - task: TerraformTask@5
+        inputs:
+          provider: 'azurerm'
+          command: 'plan'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
+          environmentServiceNameAzureRM: 'azure-pipeline-yaml'
+
+- stage: terraformInitAndApply
+  displayName: terraform Init And Apply
+  jobs:
+    - job: terraformInitAndApply
+      displayName: terraform Init And Apply
+      steps:
+      - task: ManualValidation@1
+        displayName: manualApprove
+        inputs:
+          notifyUsers: 'subhasishmaiti16@gmail.com'
+      - task: TerraformTask@5
+        displayName: terraformInit
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
+          backendServiceArm: 'azure-pipeline-yaml'
+          backendAzureRmResourceGroupName: 'rg-devops'
+          backendAzureRmStorageAccountName: 'datablockstorage'
+          backendAzureRmContainerName: 'aksstoragecont'
+          backendAzureRmKey: 'preprod.aksstoragecont'
+
+      - task: TerraformTask@5
+        inputs:
+          provider: 'azurerm'
+          command: 'apply'
+          workingDirectory: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
+          environmentServiceNameAzureRM: 'azure-pipeline-yaml'
+        
