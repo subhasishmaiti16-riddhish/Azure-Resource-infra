@@ -57,10 +57,16 @@ stages:
     displayName: terraform Scan
     steps:
     - task: PowerShell@2
-      displayName: Scan
+      displayName: tflintScan
       inputs:
         targetType: 'inline'
         script: 'tflint --recursive --force'
+
+    - task: PowerShell@2
+      displayName: trivyScan
+      inputs:
+        targetType: 'inline'
+        script: 'trivy config --severity HIGH,CRITICAL --exit-code 1 $(terraformWorkingDir)'
 
 # =========================================================
 # 2. Terraform Init + Plan
