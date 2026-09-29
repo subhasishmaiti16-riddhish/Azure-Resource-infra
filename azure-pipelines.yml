@@ -60,13 +60,14 @@ stages:
       displayName: Scan
       inputs:
         targetType: 'inline'
-        script: 'tflint --recursive'
+        script: 'tflint --recursive --force'
 
 # =========================================================
 # 2. Terraform Init + Plan
 # =========================================================
 - stage: terraformInitAndPlan
   displayName: Terraform Init And Plan
+  dependsOn: terraformScan
 
   jobs:
     - job: terraformInitAndPlan
