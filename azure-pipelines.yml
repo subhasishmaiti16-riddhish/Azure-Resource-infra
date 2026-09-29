@@ -74,6 +74,16 @@ stages:
           command: 'plan'
           workingDirectory: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
           environmentServiceNameAzureRM: 'azure-pipeline-yaml'
+      
+      - powershell: |
+          choco install infracost -y
+        displayName: Install Infracost
+
+      - powershell: |
+          infracost breakdown `
+            --path "$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment" `
+            --format table
+        displayName: Infracost Cost Estimate
 
 
 # =========================================================
