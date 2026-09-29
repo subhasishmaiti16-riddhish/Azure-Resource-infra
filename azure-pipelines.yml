@@ -50,6 +50,17 @@ stages:
           command: 'validate'
           workingDirectory: '$(terraformWorkingDir)'
 
+- stage: terraformScan
+  displayName: terraform Scan
+  jobs:
+  - job: Scan
+    displayName: terraform Scan
+    steps:
+    - task: PowerShell@2
+      displayName: Scan
+      inputs:
+        targetType: 'inline'
+        script: 'tflint --recursive'
 
 # =========================================================
 # 2. Terraform Init + Plan
