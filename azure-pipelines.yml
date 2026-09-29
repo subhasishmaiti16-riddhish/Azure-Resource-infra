@@ -1,18 +1,25 @@
-pool:  pipeline-ADO
+pool: pipeline-ADO
 
 trigger:
   - main
   - feature/*
 
 stages:
+
+# =========================================================
+# 1. Terraform Init + Format + Validation
+# =========================================================
 - stage: terraformInitFmtAndValidation
-  displayName: terraform Init Fmt And Validation
+  displayName: Terraform Init Fmt And Validation
+
   jobs:
     - job: terraformInitFmtAndValidation
-      displayName: terraform Init Fmt And Validation
+      displayName: Terraform Init Fmt And Validation
+
       steps:
+
       - task: TerraformTask@5
-        displayName: terraformInit
+        displayName: Terraform Init
         inputs:
           provider: 'azurerm'
           command: 'init'
@@ -26,23 +33,30 @@ stages:
       - powershell: |
           terraform fmt -check -recursive
         displayName: Terraform Format Check
-        workingDirectory: '$(System.DefaultWorkingDirectory)/Environment'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
 
       - task: TerraformTask@5
-        displayName: terraformValidate
+        displayName: Terraform Validate
         inputs:
           provider: 'azurerm'
           command: 'validate'
           workingDirectory: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
 
+
+# =========================================================
+# 2. Terraform Init + Plan
+# =========================================================
 - stage: terraformInitAndPlan
-  displayName: terraform Init And Plan
+  displayName: Terraform Init And Plan
+
   jobs:
     - job: terraformInitAndPlan
-      displayName: terraform Init And Plan
+      displayName: Terraform Init And Plan
+
       steps:
+
       - task: TerraformTask@5
-        displayName: terraformInit
+        displayName: Terraform Init
         inputs:
           provider: 'azurerm'
           command: 'init'
@@ -52,25 +66,59 @@ stages:
           backendAzureRmStorageAccountName: 'datablockstorage'
           backendAzureRmContainerName: 'aksstoragecont'
           backendAzureRmKey: 'preprod.aksstoragecont'
+
       - task: TerraformTask@5
+        displayName: Terraform Plan
         inputs:
           provider: 'azurerm'
           command: 'plan'
           workingDirectory: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
           environmentServiceNameAzureRM: 'azure-pipeline-yaml'
 
+
+# =========================================================
+# 3. Terraform Apply - MAIN ONLY
+# =========================================================
 - stage: terraformInitAndApply
-  displayName: terraform Init And Apply
+  displayName: Terraform Init And Apply
+
+  condition: and(
+    succeeded(),
+    eq(variables['Build.SourceBranch'], 'refs/heads/main')
+  )
+
   jobs:
-    - job: terraformInitAndApply
-      displayName: terraform Init And Apply
+
+    # Manual Approval
+    - job: manualApproval
+      displayName: Manual Approval
+      pool: server
+
       steps:
       - task: ManualValidation@1
-        displayName: manualApprove
+        displayName: Manual Approval
+        timeoutInMinutes: 1440
         inputs:
           notifyUsers: 'subhasishmaiti16@gmail.com'
+          instructions: |
+            Terraform Plan has completed successfully.
+
+            Please review the Terraform Plan.
+
+            Approve this step to continue with Terraform Apply.
+
+          onTimeout: 'reject'
+
+
+    # Terraform Apply
+    - job: terraformApply
+      displayName: Terraform Apply
+      dependsOn: manualApproval
+
+      steps:
+
       - task: TerraformTask@5
-        displayName: terraformInit
+        displayName: Terraform Init
         inputs:
           provider: 'azurerm'
           command: 'init'
@@ -82,9 +130,9 @@ stages:
           backendAzureRmKey: 'preprod.aksstoragecont'
 
       - task: TerraformTask@5
+        displayName: Terraform Apply
         inputs:
           provider: 'azurerm'
           command: 'apply'
           workingDirectory: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
           environmentServiceNameAzureRM: 'azure-pipeline-yaml'
-        
