@@ -63,10 +63,11 @@ stages:
         script: 'tflint --recursive --force'
 
     - task: PowerShell@2
-      displayName: trivyScan
+      displayName: Trivy Terraform Security Scan
       inputs:
         targetType: 'inline'
-        script: 'trivy config --severity HIGH,CRITICAL --exit-code 1 "$(terraformWorkingDir)"'
+        script: |
+          trivy config --severity HIGH,CRITICAL --exit-code 1 "$(terraformRootDir)"
 
 # =========================================================
 # 2. Terraform Init + Plan
