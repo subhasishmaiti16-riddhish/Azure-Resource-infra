@@ -1,10 +1,9 @@
 pool: pipeline-ADO
 
 trigger:
-  branches:
-    include:
-      - feature/*
-      - main
+  - feature/*
+  - main
+      
 
 variables:
   terraformWorkingDir: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
