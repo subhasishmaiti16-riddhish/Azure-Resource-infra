@@ -10,10 +10,10 @@ trigger:
 variables:
   terraformWorkingDir: '$(System.DefaultWorkingDirectory)/environment/preprod'
   azureServiceonnection: 'azure-pipeline-yaml'
-  backendResourceGroupName: 'rg-devops'
-  backendStorageAccountName: 'datablockstorage'
-  backendContainerName: 'aksstoragecont'
-  backendKey: 'preprod.aksstoragecont'
+  backendResourceGroupName: 'state-file-rg'
+  backendStorageAccountName: 'statefileaccountfork8s'
+  backendContainerName: 'statefilestorage'
+  backendKey: 'preprod.statefilestorage'
 
 stages:
 
