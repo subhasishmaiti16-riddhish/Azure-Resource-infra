@@ -4,7 +4,7 @@ resource "azurerm_network_security_group" "nsgs" {
   name                = each.value.nsg_name
   location            = each.value.location
   resource_group_name = each.value.rg_name
-  
+
   security_rule {
     name                       = "test123"
     priority                   = 100
