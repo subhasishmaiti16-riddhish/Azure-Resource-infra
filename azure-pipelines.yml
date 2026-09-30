@@ -49,7 +49,6 @@ stages:
       - powershell: |
           terraform fmt -check -recursive
         displayName: Terraform Format Check
-        workingDirectory: '$(terraformWorkingDir)'
 
       - task: TerraformTask@5
         displayName: Terraform Validate
