@@ -1,12 +1,14 @@
 pool: pipeline-ADO
 
 trigger:
-  - feature/*
-  - main
+  branches:
+    include:
+      - feature/*
+      - main
       
 
 variables:
-  terraformWorkingDir: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment'
+  terraformWorkingDir: '$(System.DefaultWorkingDirectory)/Azure-Resources-infra/environment/prepord'
   azureServiceonnection: 'azure-pipeline-yaml'
   backendResourceGroupName: 'rg-devops'
   backendStorageAccountName: 'datablockstorage'
@@ -68,7 +70,7 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          trivy config --severity HIGH,CRITICAL --exit-code 1 "$(terraformRootDir)"
+          trivy config --severity HIGH,CRITICAL --exit-code 1 "$(terraformWorkingDir)"
 
 # =========================================================
 # 2. Terraform Init + Plan
