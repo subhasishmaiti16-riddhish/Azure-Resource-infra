@@ -1,0 +1,181 @@
+pool: pipeline-ADO
+
+trigger:
+  branches:
+    include:
+      - feature/*
+      - main
+      
+
+variables:
+- group: Azure-resource-variable-group
+
+stages:
+
+# =========================================================
+# 1. Terraform Init + Format + Validation
+# =========================================================
+- stage: terraformInitFmtAndValidation
+  displayName: Terraform Init Fmt And Validation
+
+  jobs:
+    - job: terraformInitFmtAndValidation
+      displayName: Terraform Init Fmt And Validation
+
+      steps:
+
+      - task: TerraformInstaller@1
+        displayName: Install Terraform
+        inputs:
+          terraformVersion: '1.16.4'
+
+      - task: TerraformTask@5
+        displayName: Terraform Init
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(terraformWorkingDir)'
+          backendServiceArm: '$(azureServiceonnection)'
+          backendAzureRmResourceGroupName: '$(backendResourceGroupName)'
+          backendAzureRmStorageAccountName: '$(backendStorageAccountName)'
+          backendAzureRmContainerName: '$(backendContainerName)'
+          backendAzureRmKey: '$(backendKey)'
+
+      - powershell: |
+          terraform fmt -check -recursive
+        displayName: Terraform Format Check
+
+      - task: TerraformTask@5
+        displayName: Terraform Validate
+        inputs:
+          provider: 'azurerm'
+          command: 'validate'
+          workingDirectory: '$(terraformWorkingDir)'
+
+- stage: terraformScan
+  displayName: terraform Scan
+  dependsOn: terraformInitFmtAndValidation
+  jobs:
+  - job: Scan
+    displayName: terraform Scan
+    steps:
+    - task: PowerShell@2
+      displayName: tflintScan
+      inputs:
+        targetType: 'inline'
+        script: 'tflint --recursive --force'
+        workingDirectory: '$(terraformWorkingDir)'
+
+    - task: PowerShell@2
+      displayName: Trivy Terraform Security Scan
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Terraform Working Directory:"
+          Write-Host "$(terraformWorkingDir)"
+
+          Write-Host "Checking .trivyignore:"
+          Test-Path "$(terraformWorkingDir)\.trivyignore"
+
+          Write-Host "Content of .trivyignore:"
+          Get-Content "$(terraformWorkingDir)\.trivyignore"
+
+          Write-Host "Running Trivy:"
+          trivy config `
+            --severity HIGH,CRITICAL `
+            --exit-code 1 `
+            --ignorefile "$(terraformWorkingDir)\.trivyignore" `
+            "$(terraformWorkingDir)"
+
+# =========================================================
+# 2. Terraform Init + Plan
+# =========================================================
+- stage: terraformInitAndPlan
+  displayName: Terraform Init And Plan
+  dependsOn: terraformScan
+
+  jobs:
+    - job: terraformInitAndPlan
+      displayName: Terraform Init And Plan
+
+      steps:
+
+      - task: TerraformTask@5
+        displayName: Terraform Init
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(terraformWorkingDir)'
+          backendServiceArm: '$(azureServiceonnection)'
+          backendAzureRmResourceGroupName: '$(backendResourceGroupName)'
+          backendAzureRmStorageAccountName: '$(backendStorageAccountName)'
+          backendAzureRmContainerName: '$(backendContainerName)'
+          backendAzureRmKey: '$(backendKey)'
+
+      - task: TerraformTask@5
+        displayName: Terraform Plan
+        inputs:
+          provider: 'azurerm'
+          command: 'plan'
+          workingDirectory: '$(terraformWorkingDir)'
+          environmentServiceNameAzureRM: '$(azureServiceonnection)'
+
+
+# =========================================================
+# 3. Terraform Apply - MAIN ONLY
+# =========================================================
+- stage: terraformInitAndApply
+  displayName: Terraform Init And Apply
+
+  condition: and(
+    succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+
+  jobs:
+
+    # Manual Approval
+    - job: manualApproval
+      displayName: Manual Approval
+      pool: server
+
+      steps:
+      - task: ManualValidation@1
+        displayName: Manual Approval
+        timeoutInMinutes: 1440
+        inputs:
+          notifyUsers: 'subhasishmaiti16@gmail.com'
+          instructions: |
+            Terraform Plan has completed successfully.
+
+            Please review the Terraform Plan.
+
+            Approve this step to continue with Terraform Apply.
+
+          onTimeout: 'reject'
+
+
+    # Terraform Apply
+    - job: terraformApply
+      displayName: Terraform Apply
+      dependsOn: manualApproval
+
+      steps:
+
+      - task: TerraformTask@5
+        displayName: Terraform Init
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(terraformWorkingDir)'
+          backendServiceArm: '$(azureServiceonnection)'
+          backendAzureRmResourceGroupName: '$(backendResourceGroupName)'
+          backendAzureRmStorageAccountName: '$(backendStorageAccountName)'
+          backendAzureRmContainerName: '$(backendContainerName)'
+          backendAzureRmKey: '$(backendKey)'
+
+      - task: TerraformTask@5
+        displayName: Terraform Apply
+        inputs:
+          provider: 'azurerm'
+          command: 'apply'
+          workingDirectory: '$(terraformWorkingDir)'
+          environmentServiceNameAzureRM: '$(azureServiceonnection)'
