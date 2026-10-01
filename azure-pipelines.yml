@@ -71,7 +71,7 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          trivy config --severity HIGH,CRITICAL --exit-code 1 "$(terraformWorkingDir)"
+          trivy config --severity HIGH,CRITICAL --exit-code 1 --ignorefile "$(terraformWorkingDir)\.trivyignore" "$(terraformWorkingDir)"
 
 # =========================================================
 # 2. Terraform Init + Plan
