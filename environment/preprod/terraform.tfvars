@@ -83,14 +83,14 @@ vm-preprod = {
   vm1 = {
     vm_name  = "frontend-vm"
     rg_name  = "azure-rgs"
-    location = "CentraIndia"
+    location = "CentralIndia"
     nic_name = "frontend-nic"
     nsg_name = "azure-nsg"
   }
   vm2 = {
     vm_name  = "backend-vm"
     rg_name  = "azure-rgs"
-    location = "CentraIndia"
+    location = "CentralIndia"
     nic_name = "backend-nic"
     nsg_name = "azure-nsg"
   }
