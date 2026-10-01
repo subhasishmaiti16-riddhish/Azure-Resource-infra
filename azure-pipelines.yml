@@ -108,27 +108,19 @@ stages:
 
 
       - powershell: |
-          if ($env:INFRACOST_CLI_AUTHENTICATION_TOKEN) {
-            Write-Host "Token is available"
-          }
-          else {
-            Write-Error "Token is NOT available"
-          }
-        displayName: Check Infracost Token
-        env:
-          INFRACOST_CLI_AUTHENTICATION_TOKEN: $(infracostApiKey)
+          terraform show -json tfplan > tfplan.json
+        displayName: Convert Terraform Plan to JSON
+        workingDirectory: '$(terraformWorkingDir)'
             
       - powershell: |
           choco install infracost -y
         displayName: Install Infracost
 
       - powershell: |
-          infracost breakdown `
-            --path "$(terraformWorkingDir)" `
-            --format table
+          infracost scan "$(terraformWorkingDir)\tfplan.json"
         displayName: Infracost Cost Estimate
         env:
-          INFRACOST_CLI_AUTHENTICATION_TOKEN: $(infracostApiKey)
+          INFRACOST_CLI_AUTHENTICATION_TOKEN: $(infracostCliToken)
 
 
 # =========================================================
