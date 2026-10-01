@@ -105,23 +105,6 @@ stages:
           command: 'plan'
           workingDirectory: '$(terraformWorkingDir)'
           environmentServiceNameAzureRM: '$(azureServiceonnection)'
-          commandOptions: '-out=tfplan'
-
-
-      - powershell: |
-          terraform show -json tfplan > tfplan.json
-        displayName: Convert Terraform Plan to JSON
-        workingDirectory: '$(terraformWorkingDir)'
-            
-      - powershell: |
-          choco install infracost -y
-        displayName: Install Infracost
-
-      - powershell: |
-          infracost scan "$(terraformWorkingDir)\tfplan.json"
-        displayName: Infracost Cost Estimate
-        env:
-          INFRACOST_CLI_AUTHENTICATION_TOKEN: $(infracostCliToken)
 
 
 # =========================================================
