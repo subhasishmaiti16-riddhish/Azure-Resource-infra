@@ -110,7 +110,19 @@ stages:
           command: 'plan'
           workingDirectory: '$(terraformWorkingDir)'
           environmentServiceNameAzureRM: '$(azureServiceonnection)'
-      
+
+
+      - powershell: |
+          if ($env:INFRACOST_CLI_AUTHENTICATION_TOKEN) {
+            Write-Host "Token is available"
+          }
+          else {
+            Write-Error "Token is NOT available"
+          }
+        displayName: Check Infracost Token
+        env:
+          INFRACOST_CLI_AUTHENTICATION_TOKEN: $(infracostApiKey)
+            
       - powershell: |
           choco install infracost -y
         displayName: Install Infracost
