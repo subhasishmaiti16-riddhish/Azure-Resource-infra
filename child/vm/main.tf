@@ -31,7 +31,7 @@ resource "azurerm_linux_virtual_machine" "azure-vm" {
   name                = each.value.vm_name
   resource_group_name = each.value.rg_name
   location            = each.value.location
-  size                = "Standard_D2s_v3"
+  size                = "Standard_B2s"
   admin_username      = "adminuser"
   admin_password      = "Subhasish12#"
   network_interface_ids = [
