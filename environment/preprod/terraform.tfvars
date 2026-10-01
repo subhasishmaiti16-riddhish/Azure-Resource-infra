@@ -40,7 +40,7 @@ nic-preprod = {
     nic_name    = "frontend-nic"
     rg_name     = "azure-rgs"
     location    = "CentralIndia"
-    subnet_name = "azure-subnet"
+    subnet_name = "azure-subnet1"
     vnet_name   = "azure-vnet"
   }
   nic2 = {
@@ -64,7 +64,7 @@ nat-preprod = {
   nat1 = {
     nat_name = "nat-gateway"
     location = "centralIndia"
-    rg_name  = "azure-rg"
+    rg_name  = "azure-rgs"
   }
 }
 
