@@ -105,6 +105,7 @@ stages:
           command: 'plan'
           workingDirectory: '$(terraformWorkingDir)'
           environmentServiceNameAzureRM: '$(azureServiceonnection)'
+          commandOptions: '-out=tfplan'
 
 
       - powershell: |
