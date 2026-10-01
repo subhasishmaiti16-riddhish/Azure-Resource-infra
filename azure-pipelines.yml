@@ -120,6 +120,8 @@ stages:
             --path "$(terraformWorkingDir)" `
             --format table
         displayName: Infracost Cost Estimate
+        env:
+          INFRACOST_CLI_AUTHENTICATION_TOKEN: $(infracostApiKey)
 
 
 # =========================================================
